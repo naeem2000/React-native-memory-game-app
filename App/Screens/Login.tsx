@@ -1,5 +1,6 @@
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
   Text,
   View,
@@ -9,30 +10,80 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import {faHourglass} from '@fortawesome/free-solid-svg-icons';
+
+interface User {
+  email: string;
+  password: string;
+}
+
+interface Error {
+  emailError: string;
+  passwordError: string;
+}
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
+
 export default function Login() {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [error, setError] = useState<boolean>(false);
+  const [userData, setUserData] = useState<User>({email: '', password: ''});
 
-  useEffect(() => {
-    AsyncStorage.setItem('email', email);
-    AsyncStorage.setItem('password', password);
-  }, [email, password]);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const onLogIn = async () => {
-    if (!email) {
-      setError(true);
+  const [error, setError] = useState<Error>({
+    emailError: '',
+    passwordError: '',
+  });
+
+  function Inputemail(email: string) {
+    setUserData({...userData, email});
+  }
+
+  function InputPassword(password: string) {
+    setUserData({...userData, password});
+  }
+
+  let errorTrigger = error;
+
+  const onLogin = async () => {
+    if (userData.email === '') {
+      errorTrigger = {
+        ...errorTrigger,
+        emailError: 'Please Enter a email.',
+      };
+    } else
+      errorTrigger = {
+        ...errorTrigger,
+        emailError: '',
+      };
+    if (userData.password === '') {
+      errorTrigger = {
+        ...errorTrigger,
+        passwordError: 'Please enter a password.',
+      };
+    } else
+      errorTrigger = {
+        ...errorTrigger,
+        passwordError: '',
+      };
+    loginLoader();
+    if (!error) {
+      AsyncStorage.setItem('email', userData.email);
+      AsyncStorage.setItem('password', userData.password);
     }
-    if (!password) {
-      setError(true);
-    }
-    if (password && email) {
-      setError(false);
-    }
+    setError(errorTrigger);
+    navigation.navigate('Home');
   };
+
+  const loginLoader = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+  };
+
+  console.log(AsyncStorage.getItem('email'), AsyncStorage.getItem('password'));
+
   return (
     <ScrollView>
       <View style={styles.loginContainer}>
@@ -43,22 +94,44 @@ export default function Login() {
           <TextInput
             style={styles.textArea}
             placeholder="Email"
-            onChangeText={text => setEmail(text)}
-            value={email}
+            keyboardType="email-address"
+            onChangeText={e => Inputemail(e)}
+            value={userData.email}
           />
-          {error && <Text style={{color: 'maroon'}}>Please enter email</Text>}
+          {error.emailError && (
+            <Text style={{color: 'red'}}>{error.emailError}</Text>
+          )}
           <TextInput
             style={styles.textArea}
             placeholder="Password"
-            onChangeText={text => setPassword(text)}
-            value={password}
+            onChangeText={e => InputPassword(e)}
+            value={userData.password}
           />
-          {error && (
-            <Text style={{color: 'maroon'}}>Please enter password</Text>
+          {error.passwordError && (
+            <Text style={{color: 'red'}}>{error.passwordError}</Text>
           )}
-          <TouchableOpacity style={styles.loginButton} onPress={e => onLogIn()}>
-            <Text style={{color: 'white'}}>Login</Text>
-          </TouchableOpacity>
+          {userData.email && userData.password ? (
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={e => onLogin()}>
+              <Text style={{color: 'white'}}>
+                {!loading && <Text>Log in</Text>}
+                {loading && (
+                  <>
+                    <FontAwesomeIcon icon={faHourglass} />
+                    &nbsp;
+                    <Text>Loggin in</Text>
+                  </>
+                )}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={e => onLogin()}>
+              <Text style={{color: 'white'}}>Log in</Text>
+            </TouchableOpacity>
+          )}
           <Text style={styles.smallText}>Not registered?</Text>
         </View>
       </View>
@@ -70,7 +143,7 @@ const styles = StyleSheet.create({
   loginContainer: {
     height: windowHeight,
     width: windowWidth,
-    backgroundColor: 'coral',
+    backgroundColor: 'black',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -78,16 +151,19 @@ const styles = StyleSheet.create({
   loginMainText: {
     textAlign: 'center',
     fontSize: 30,
+    color: 'white',
   },
   welcome: {
     textAlign: 'center',
     fontSize: 30,
     fontWeight: '900',
+    color: 'white',
   },
   welcomeSub: {
     textAlign: 'center',
     fontSize: 20,
     fontWeight: '900',
+    color: 'white',
   },
   textArea: {
     height: 40,
@@ -99,6 +175,8 @@ const styles = StyleSheet.create({
   },
   smallText: {
     fontSize: 15,
+    color: 'white',
+
     marginTop: 10,
   },
   innerContainer: {
