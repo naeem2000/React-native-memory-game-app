@@ -1,5 +1,6 @@
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {faHourglass} from '@fortawesome/free-solid-svg-icons';
 import React, {useState} from 'react';
 import {
   Text,
@@ -10,69 +11,49 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import {faHourglass} from '@fortawesome/free-solid-svg-icons';
 
 interface User {
-  email: string;
-  password: string;
+  userName: string;
 }
 
 interface Error {
   emailError: string;
-  passwordError: string;
 }
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
-export default function Login() {
-  const [userData, setUserData] = useState<User>({email: '', password: ''});
+export default function Login({navigation}: any) {
+  const [userData, setUserData] = useState<User>({userName: ''});
 
   const [loading, setLoading] = useState<boolean>(false);
 
   const [error, setError] = useState<Error>({
     emailError: '',
-    passwordError: '',
   });
 
-  function Inputemail(email: string) {
-    setUserData({...userData, email});
-  }
-
-  function InputPassword(password: string) {
-    setUserData({...userData, password});
+  function InputUsername(userName: string) {
+    setUserData({...userData, userName});
   }
 
   let errorTrigger = error;
 
   const onLogin = async () => {
-    if (userData.email === '') {
+    if (userData.userName === '') {
       errorTrigger = {
         ...errorTrigger,
-        emailError: 'Please Enter a email.',
+        emailError: 'Please Enter a username.',
       };
     } else
       errorTrigger = {
         ...errorTrigger,
         emailError: '',
       };
-    if (userData.password === '') {
-      errorTrigger = {
-        ...errorTrigger,
-        passwordError: 'Please enter a password.',
-      };
-    } else
-      errorTrigger = {
-        ...errorTrigger,
-        passwordError: '',
-      };
-    loginLoader();
+
     if (!error) {
-      AsyncStorage.setItem('email', userData.email);
-      AsyncStorage.setItem('password', userData.password);
+      AsyncStorage.setItem('username', userData.userName);
     }
     setError(errorTrigger);
-    navigation.navigate('Home');
   };
 
   const loginLoader = () => {
@@ -81,8 +62,6 @@ export default function Login() {
       setLoading(false);
     }, 5000);
   };
-
-  console.log(AsyncStorage.getItem('email'), AsyncStorage.getItem('password'));
 
   return (
     <ScrollView>
@@ -93,38 +72,34 @@ export default function Login() {
         <View style={styles.innerContainer}>
           <TextInput
             style={styles.textArea}
-            placeholder="Email"
-            keyboardType="email-address"
-            onChangeText={e => Inputemail(e)}
-            value={userData.email}
+            placeholder="username"
+            onChangeText={e => InputUsername(e)}
+            value={userData.userName}
           />
           {error.emailError && (
             <Text style={{color: 'red'}}>{error.emailError}</Text>
           )}
-          <TextInput
-            style={styles.textArea}
-            placeholder="Password"
-            onChangeText={e => InputPassword(e)}
-            value={userData.password}
-          />
-          {error.passwordError && (
-            <Text style={{color: 'red'}}>{error.passwordError}</Text>
-          )}
-          {userData.email && userData.password ? (
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={e => onLogin()}>
-              <Text style={{color: 'white'}}>
-                {!loading && <Text>Log in</Text>}
-                {loading && (
-                  <>
-                    <FontAwesomeIcon icon={faHourglass} />
-                    &nbsp;
-                    <Text>Loggin in</Text>
-                  </>
-                )}
-              </Text>
-            </TouchableOpacity>
+
+          {userData.userName ? (
+            <>
+              {!loading && (
+                <TouchableOpacity
+                  style={styles.loginButton}
+                  onPress={() => {
+                    onLogin();
+                    navigation.navigate('Home');
+                    loginLoader();
+                  }}>
+                  <Text style={{color: 'white'}}>Log in</Text>
+                </TouchableOpacity>
+              )}
+              {loading && (
+                <TouchableOpacity style={styles.loginButton}>
+                  <FontAwesomeIcon icon={faHourglass} />
+                  <Text style={{color: 'white'}}>Loggin in</Text>
+                </TouchableOpacity>
+              )}
+            </>
           ) : (
             <TouchableOpacity
               style={styles.loginButton}
