@@ -1,7 +1,6 @@
 import {StyleSheet, Text, View, TouchableOpacity} from 'react-native';
 import React, {useState, useEffect} from 'react';
 
-// List of emojis for the game
 const emojis = [
   '😀',
   '😁',
@@ -26,7 +25,6 @@ const MemoryGame = () => {
   const [selectedCards, setSelectedCards] = useState<any>([]);
   const [score, setScore] = useState<any>(0);
 
-  // Shuffle the cards when the game starts or restarts
   useEffect(() => {
     const shuffledEmojis = shuffle(emojis.concat(emojis));
     const initialCards = shuffledEmojis.map((emoji: any, index: any) => ({
@@ -40,7 +38,6 @@ const MemoryGame = () => {
     setScore(0);
   }, []);
 
-  // Shuffle an array using the Fisher-Yates algorithm
   const shuffle = (array: string | any[]) => {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -49,7 +46,6 @@ const MemoryGame = () => {
     return array;
   };
 
-  // Flip a card when it's tapped
   const flipCard = (id: any) => {
     const newCards = [...cards];
     const selectedCard = newCards.find(card => card.id === id);
@@ -63,12 +59,10 @@ const MemoryGame = () => {
 
     if (selectedCards.length === 1) {
       if (selectedCard.emoji === selectedCards[0].emoji) {
-        // If the selected card matches the previously selected card
         selectedCard.isMatched = true;
         selectedCards[0].isMatched = true;
         setScore(score + 2);
       } else {
-        // If the selected card doesn't match the previously selected card
         setTimeout(() => {
           selectedCard.isFlipped = false;
           selectedCards[0].isFlipped = false;

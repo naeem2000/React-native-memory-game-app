@@ -23,12 +23,10 @@ const LoginScreen = ({navigation}: any) => {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   const handleLogin = async () => {
-    // Retrieve user data from AsyncStorage
     const userData = await AsyncStorage.getItem('user');
     const user = JSON.parse(userData!);
     console.log(userData);
 
-    // Check if email and password match
     if (user.email === email && user.password === password) {
       navigation.navigate('Home');
       setErrorMessage('');
