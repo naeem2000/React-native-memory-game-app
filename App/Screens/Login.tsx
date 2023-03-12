@@ -27,7 +27,7 @@ const LoginScreen = ({navigation}: any) => {
     const user = JSON.parse(userData!);
     console.log(userData);
 
-    if (user.email === email && user.password === password) {
+    if (user?.email === email && user?.password === password) {
       navigation.navigate('Home');
       setErrorMessage('');
       loginLoader();
