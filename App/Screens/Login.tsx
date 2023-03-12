@@ -1,6 +1,7 @@
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faHourglass} from '@fortawesome/free-solid-svg-icons';
+import RegisterScreen from './Register';
 import React, {useState} from 'react';
 import {
   Text,
@@ -8,52 +9,34 @@ import {
   TextInput,
   StyleSheet,
   Dimensions,
-  ScrollView,
   TouchableOpacity,
 } from 'react-native';
-
-interface User {
-  userName: string;
-}
-
-interface Error {
-  emailError: string;
-}
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
-export default function Login({navigation}: any) {
-  const [userData, setUserData] = useState<User>({userName: ''});
-
+const LoginScreen = ({navigation}: any) => {
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
 
-  const [error, setError] = useState<Error>({
-    emailError: '',
-  });
+  const handleLogin = async () => {
+    // Retrieve user data from AsyncStorage
+    const userData = await AsyncStorage.getItem('user');
+    const user = JSON.parse(userData!);
+    console.log(userData);
 
-  function InputUsername(userName: string) {
-    setUserData({...userData, userName});
-  }
-
-  let errorTrigger = error;
-
-  const onLogin = async () => {
-    if (userData.userName === '') {
-      errorTrigger = {
-        ...errorTrigger,
-        emailError: 'Please Enter a username.',
-      };
-    } else
-      errorTrigger = {
-        ...errorTrigger,
-        emailError: '',
-      };
-
-    if (!error) {
-      AsyncStorage.setItem('username', userData.userName);
+    // Check if email and password match
+    if (user.email === email && user.password === password) {
+      navigation.navigate('Home');
+      setErrorMessage('');
+      loginLoader();
+    } else {
+      setErrorMessage('Invalid email or password');
+      setLoading(false);
     }
-    setError(errorTrigger);
   };
 
   const loginLoader = () => {
@@ -64,55 +47,62 @@ export default function Login({navigation}: any) {
   };
 
   return (
-    <ScrollView>
-      <View style={styles.loginContainer}>
-        <Text style={styles.welcome}>Welcome!</Text>
-        <Text style={styles.welcomeSub}>Up for a memory challenge?{'\n'}</Text>
-        <Text style={styles.loginMainText}>Login</Text>
-        <View style={styles.innerContainer}>
-          <TextInput
-            style={styles.textArea}
-            placeholder="username"
-            onChangeText={e => InputUsername(e)}
-            value={userData.userName}
-          />
-          {error.emailError && (
-            <Text style={{color: 'red'}}>{error.emailError}</Text>
-          )}
-
-          {userData.userName ? (
-            <>
-              {!loading && (
-                <TouchableOpacity
-                  style={styles.loginButton}
-                  onPress={() => {
-                    onLogin();
-                    navigation.navigate('Home');
-                    loginLoader();
-                  }}>
-                  <Text style={{color: 'white'}}>Log in</Text>
-                </TouchableOpacity>
-              )}
-              {loading && (
-                <TouchableOpacity style={styles.loginButton}>
-                  <FontAwesomeIcon icon={faHourglass} />
-                  <Text style={{color: 'white'}}>Loggin in</Text>
-                </TouchableOpacity>
-              )}
-            </>
-          ) : (
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={e => onLogin()}>
-              <Text style={{color: 'white'}}>Log in</Text>
-            </TouchableOpacity>
-          )}
+    <View style={styles.loginContainer}>
+      <Text style={styles.welcome}>Welcome!</Text>
+      <Text style={styles.welcomeSub}>Up for a memory challenge?{'\n'}</Text>
+      <Text style={styles.loginMainText}>Login</Text>
+      <View style={styles.innerContainer}>
+        <TextInput
+          style={styles.textArea}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+        />
+        <TextInput
+          style={styles.textArea}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+        {!errorMessage ? (
+          <>
+            {!loading && (
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleLogin}>
+                <Text style={{color: 'white'}}>Log in</Text>
+              </TouchableOpacity>
+            )}
+            {loading && (
+              <TouchableOpacity style={styles.loginButton}>
+                <FontAwesomeIcon icon={faHourglass} />
+                <Text style={{color: 'white'}}>Logging in</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        ) : (
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <Text style={{color: 'white'}}>Log in</Text>
+          </TouchableOpacity>
+        )}
+        {errorMessage && (
+          <Text style={{color: 'red', margin: 10}}>{errorMessage}</Text>
+        )}
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Text style={styles.smallText}>Not registered?</Text>
-        </View>
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+      <RegisterScreen
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
+    </View>
   );
-}
+};
+
+export default LoginScreen;
 
 const styles = StyleSheet.create({
   loginContainer: {
@@ -152,7 +142,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: 'white',
 
-    marginTop: 10,
+    margin: 10,
   },
   innerContainer: {
     width: '80%',

@@ -1,129 +1,169 @@
-import React, {useState} from 'react';
 import {StyleSheet, Text, View, TouchableOpacity} from 'react-native';
+import React, {useState, useEffect} from 'react';
 
-const symbols = ['🍎', '🍉', '🍇', '🍓', '🥭', '🍊', '🍌', '🥝'];
+// List of emojis for the game
+const emojis = [
+  '😀',
+  '😁',
+  '😂',
+  '🤣',
+  '😃',
+  '😄',
+  '😅',
+  '😆',
+  '😇',
+  '😉',
+  '😊',
+  '🙂',
+  '🙃',
+  '😋',
+  '😌',
+  '😍',
+];
 
-export default function App() {
-  const [cards, setCards] = useState<any>(shuffle([...symbols, ...symbols]));
-  const [flippedCards, setFlippedCards] = useState<any>([]);
-  const [solvedCards, setSolvedCards] = useState<any>([]);
+const MemoryGame = () => {
+  const [cards, setCards] = useState<any>([]);
+  const [selectedCards, setSelectedCards] = useState<any>([]);
+  const [score, setScore] = useState<any>(0);
 
-  const handleCardPress = (index: any) => {
-    if (flippedCards.length === 2 || solvedCards.includes(index)) {
+  // Shuffle the cards when the game starts or restarts
+  useEffect(() => {
+    const shuffledEmojis = shuffle(emojis.concat(emojis));
+    const initialCards = shuffledEmojis.map((emoji: any, index: any) => ({
+      id: index,
+      emoji: emoji,
+      isFlipped: false,
+      isMatched: false,
+    }));
+    setCards(initialCards);
+    setSelectedCards([]);
+    setScore(0);
+  }, []);
+
+  // Shuffle an array using the Fisher-Yates algorithm
+  const shuffle = (array: string | any[]) => {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  };
+
+  // Flip a card when it's tapped
+  const flipCard = (id: any) => {
+    const newCards = [...cards];
+    const selectedCard = newCards.find(card => card.id === id);
+
+    if (selectedCard.isMatched || selectedCards.length === 2) {
       return;
     }
 
-    const newFlippedCards = [...flippedCards, index];
-    setFlippedCards(newFlippedCards);
+    selectedCard.isFlipped = true;
+    setSelectedCards([...selectedCards, selectedCard]);
 
-    if (newFlippedCards.length === 2) {
-      const [cardIndex1, cardIndex2] = newFlippedCards;
-      const [card1, card2] = [cards[cardIndex1], cards[cardIndex2]];
-
-      if (card1 === card2) {
-        setSolvedCards([...solvedCards, cardIndex1, cardIndex2]);
-        setFlippedCards([]);
+    if (selectedCards.length === 1) {
+      if (selectedCard.emoji === selectedCards[0].emoji) {
+        // If the selected card matches the previously selected card
+        selectedCard.isMatched = true;
+        selectedCards[0].isMatched = true;
+        setScore(score + 2);
       } else {
+        // If the selected card doesn't match the previously selected card
         setTimeout(() => {
-          setFlippedCards([]);
+          selectedCard.isFlipped = false;
+          selectedCards[0].isFlipped = false;
+          setScore(score - 1);
         }, 1000);
       }
+      setSelectedCards([]);
     }
-  };
-
-  const handleNewGamePress = () => {
-    setCards(shuffle([...symbols, ...symbols]));
-    setFlippedCards([]);
-    setSolvedCards([]);
-  };
-
-  const renderCard = (index: React.Key | null | undefined) => {
-    const isFlipped = flippedCards.includes(index);
-    const isSolved = solvedCards.includes(index);
-    const cardSymbol = isFlipped || isSolved ? cards[index] : '❓';
-
-    return (
-      <TouchableOpacity
-        key={index}
-        style={[styles.card, isFlipped && styles.flippedCard]}
-        onPress={() => handleCardPress(index)}
-        disabled={isFlipped || isSolved}>
-        <Text style={styles.cardText}>{cardSymbol}</Text>
-      </TouchableOpacity>
-    );
+    setCards(newCards);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Memory Game</Text>
-      <View style={styles.cardContainer}>
-        {cards.map((_: any, index: any) => renderCard(index))}
+      <View style={styles.scoreContainer}>
+        <Text style={styles.scoreText}>Score: {score}</Text>
       </View>
-      <TouchableOpacity
-        style={styles.newGameButton}
-        onPress={handleNewGamePress}>
-        <Text style={styles.newGameButtonText}>New Game</Text>
-      </TouchableOpacity>
+      <View style={styles.gameBoard}>
+        {cards.map(
+          (card: {
+            id: React.Key | null | undefined;
+            isFlipped: any;
+            isMatched: any;
+            emoji:
+              | string
+              | number
+              | boolean
+              | React.ReactElement<
+                  any,
+                  string | React.JSXElementConstructor<any>
+                >
+              | React.ReactFragment
+              | React.ReactPortal
+              | null
+              | undefined;
+          }) => (
+            <TouchableOpacity
+              key={card.id}
+              style={[
+                styles.card,
+                card.isFlipped ? styles.cardFlipped : null,
+                card.isMatched ? styles.cardMatched : null,
+              ]}
+              onPress={() => flipCard(card.id)}
+              disabled={
+                card.isFlipped || card.isMatched || selectedCards.length === 2
+              }>
+              {card.isFlipped && !card.isMatched && (
+                <Text style={styles.cardText}>{card.emoji}</Text>
+              )}
+            </TouchableOpacity>
+          ),
+        )}
+      </View>
     </View>
   );
-}
-
-const shuffle = (array: string[]) => {
-  const newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-  }
-  return newArray;
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'black',
   },
-  title: {
-    fontSize: 30,
-    color: 'white',
+  scoreContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  scoreText: {
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 30,
   },
-  cardContainer: {
+  gameBoard: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
   },
   card: {
-    width: 70,
-    height: 70,
-    margin: 10,
-    backgroundColor: '#DDD',
+    backgroundColor: '#eee',
     borderRadius: 5,
+    width: 60,
+    height: 60,
+    margin: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  flippedCard: {
-    backgroundColor: '#6FCF97',
-  },
   cardText: {
-    fontSize: 30,
+    fontSize: 40,
   },
-  newGameButton: {
-    borderWidth: 1,
-    padding: 10,
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginTop: 15,
-    width: '50%',
-    backgroundColor: 'silver',
-    borderBottomLeftRadius: 20,
-    borderTopRightRadius: 20,
+  cardFlipped: {
+    backgroundColor: '#fff',
   },
-  newGameButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 20,
+  cardMatched: {
+    backgroundColor: '#8cff66',
   },
 });
+
+export default MemoryGame;
